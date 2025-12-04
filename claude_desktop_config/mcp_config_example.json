@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "kafka-inspector": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/ABSOLUTE/PATH/TO/kafka-mcp-inspector",
+        "run",
+        "python",
+        "-m",
+        "mcp_server.server"
+      ],
+      "env": {
+        "KAFKA_BOOTSTRAP_SERVERS": "localhost:9092"
+      }
+    }
+  }
+}
