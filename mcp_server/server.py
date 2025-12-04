@@ -1,7 +1,9 @@
 """Kafka MCP Inspector - Main MCP Server"""
 import os
+import asyncio
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
+from mcp.types import Tool, TextContent
 from confluent_kafka.admin import AdminClient
 
 
@@ -13,31 +15,31 @@ app = Server("kafka-mcp-inspector")
 
 
 @app.list_tools()
-async def list_tools():
+async def list_tools() -> list[Tool]:
     """List available tools."""
     return [
-        {
-            "name": "list_topics",
-            "description": "List all Kafka topics with basic information including partition count",
-            "inputSchema": {
+        Tool(
+            name="list_topics",
+            description="List all Kafka topics with basic information including partition count and replication factor",
+            inputSchema={
                 "type": "object",
                 "properties": {},
                 "required": []
             }
-        }
+        )
     ]
 
 
 @app.call_tool()
-async def call_tool(name: str, arguments: dict):
+async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     """Handle tool calls."""
     if name == "list_topics":
-        return await list_topics()
+        return await get_kafka_topics()
     else:
-        return [{"type": "text", "text": f"Unknown tool: {name}"}]
+        return [TextContent(type="text", text=f"Unknown tool: {name}")]
 
 
-async def list_topics():
+async def get_kafka_topics() -> list[TextContent]:
     """List all Kafka topics."""
     try:
         # Create Kafka AdminClient
@@ -72,12 +74,12 @@ async def list_topics():
                 response_text += f"  - Partitions: {topic['partitions']}\n"
                 response_text += f"  - Replication Factor: {topic['replication_factor']}\n\n"
 
-        return [{"type": "text", "text": response_text}]
+        return [TextContent(type="text", text=response_text)]
 
     except Exception as e:
         error_msg = f"Error listing topics: {str(e)}\n\n"
         error_msg += f"Make sure Kafka is running at {KAFKA_BOOTSTRAP_SERVERS}"
-        return [{"type": "text", "text": error_msg}]
+        return [TextContent(type="text", text=error_msg)]
 
 
 async def main():
@@ -91,5 +93,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
